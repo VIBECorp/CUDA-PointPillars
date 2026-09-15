@@ -132,21 +132,36 @@ void SaveBoxPred(std::vector<pointpillar::lidar::BoundingBox> boxes, std::string
 };
 
 std::shared_ptr<pointpillar::lidar::Core> create_core() {
+    // KRRI rail_v4 모델 파라미터 (OpenPCDet tools/cfgs/rail_models/pointpillar_rail.yaml 와 동기화)
     pointpillar::lidar::VoxelizationParameter vp;
-    vp.min_range = nvtype::Float3(0.0, -39.68f, -3.0);
-    vp.max_range = nvtype::Float3(69.12f, 39.68f, 1.0);
-    vp.voxel_size = nvtype::Float3(0.16f, 0.16f, 4.0f);
+    vp.min_range = nvtype::Float3(-3.2f, -3.2f, -0.5f);
+    vp.max_range = nvtype::Float3(3.2f, 3.2f, 1.5f);
+    vp.voxel_size = nvtype::Float3(0.01f, 0.01f, 2.0f);
     vp.grid_size =
-        vp.compute_grid_size(vp.max_range, vp.min_range, vp.voxel_size);
-    vp.max_voxels = 40000;
-    vp.max_points_per_voxel = 32;
+        vp.compute_grid_size(vp.max_range, vp.min_range, vp.voxel_size);   // 640 x 640 x 1
+    vp.max_voxels = 75000;              // ONNX voxels 입력 크기와 일치 필수
+    vp.max_points_per_voxel = 32;       // CUDA 복셀화 커널 warp 설계 (ONNX P=32와 일치)
     vp.max_points = 300000;
-    vp.num_feature = 4;
+    vp.num_feature = 4;                 // x, y, z, intensity(그레이/255)
 
     pointpillar::lidar::PostProcessParameter pp;
     pp.min_range = vp.min_range;
     pp.max_range = vp.max_range;
-    pp.feature_size = nvtype::Int2(vp.grid_size.x/2, vp.grid_size.y/2);
+    pp.feature_size = nvtype::Int2(vp.grid_size.x/2, vp.grid_size.y/2);    // 320 x 320
+    pp.num_classes = 1;                 // Rail
+    pp.num_anchors = 4;                 // 1 크기 x 4 회전
+    pp.len_per_anchor = 4;
+    // {l, w, h, rot} x 4 (나머지 원소는 미사용)
+    pp.anchors[0] = 2.4f;  pp.anchors[1] = 0.1f;  pp.anchors[2] = 0.21f; pp.anchors[3] = 0.0f;
+    pp.anchors[4] = 2.4f;  pp.anchors[5] = 0.1f;  pp.anchors[6] = 0.21f; pp.anchors[7] = 0.785f;
+    pp.anchors[8] = 2.4f;  pp.anchors[9] = 0.1f;  pp.anchors[10] = 0.21f; pp.anchors[11] = 1.57f;
+    pp.anchors[12] = 2.4f; pp.anchors[13] = 0.1f; pp.anchors[14] = 0.21f; pp.anchors[15] = 2.355f;
+    // 커널이 anchor_bottom_heights[ith_anchor/2] 로 접근 (클래스당 2회전 가정) ->
+    // 4앵커면 인덱스 0..1 사용: 단일 클래스 bottom height 0.0 으로 모두 채움
+    pp.anchor_bottom_heights = nvtype::Float3(0.0f, 0.0f, 0.0f);
+    pp.score_thresh = 0.1f;
+    pp.dir_offset = 0.78539f;
+    pp.nms_thresh = 0.01f;
 
     pointpillar::lidar::CoreParameter param;
     param.voxelization = vp;

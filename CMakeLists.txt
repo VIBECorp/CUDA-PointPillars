@@ -22,11 +22,11 @@ set(arch ${CMAKE_HOST_SYSTEM_PROCESSOR})
 
 find_package(CUDA REQUIRED)
 
-set(CMAKE_CXX_FLAGS_RELEASE "-std=c++14 -Wextra -Wall -Wno-missing-field-initializers -Wno-deprecated-declarations -O3")
-set(CMAKE_CXX_FLAGS_DEBUG   "-std=c++14 -O0 -g")
+set(CMAKE_CXX_FLAGS_RELEASE "-std=c++17 -Wextra -Wall -Wno-missing-field-initializers -Wno-deprecated-declarations -O3")
+set(CMAKE_CXX_FLAGS_DEBUG   "-std=c++17 -O0 -g")
 
-set(CUDA_NVCC_FLAGS_RELEASE "-Werror=all-warnings -Xcompiler -std=c++14,-Wextra,-Wall,-Wno-deprecated-declarations,-O3")
-set(CUDA_NVCC_FLAGS_DEBUG   "-std=c++14 -O0 -g")
+set(CUDA_NVCC_FLAGS_RELEASE "-Werror=all-warnings -Xcompiler -std=c++17,-Wextra,-Wall,-Wno-deprecated-declarations,-O3")
+set(CUDA_NVCC_FLAGS_DEBUG   "-std=c++17 -O0 -g")
 
 set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} 
     -gencode arch=compute_$ENV{CUDASM},code=compute_$ENV{CUDASM}
