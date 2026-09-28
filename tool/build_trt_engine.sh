@@ -1,2 +1,5 @@
-#!/bin/bash
-/usr/src/tensorrt/bin/trtexec --onnx=./model/pointpillar.onnx --fp16 --plugins=build/libpointpillar_core.so --saveEngine=./model/pointpillar.plan --inputIOFormats=fp16:chw,int32:chw,int32:chw --verbose --dumpLayerInfo --dumpProfile --separateProfileRun --profilingVerbosity=detailed > model/pointpillar.8611.log 2>&1
+#!/bin/sh
+# Resolve paths from this script, independent of the caller's working directory.
+set -eu
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+exec "${PYTHON:-python3}" "$SCRIPT_DIR/build_trt_engine.py" "$@"
